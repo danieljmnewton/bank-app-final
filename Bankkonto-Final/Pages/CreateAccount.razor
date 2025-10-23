@@ -1,0 +1,207 @@
+@page "/CreateAccount"
+@using System.ComponentModel.DataAnnotations
+@inject IAccountService AccountService
+
+<div class="container py-3">
+    <h3 class="mb-4">Vänligen skapa ett konto</h3>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @_errorMessage
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label">Kontonamn</label>
+                            <InputText class="form-control" @bind-Value="_model.Name" />
+                            <ValidationMessage For="@(() => _model.Name)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Kontotyp</label>
+                            <InputSelect class="form-select" @bind-Value="_model.Type">
+                                <option value="@AccountType.None" disabled>Välj kontotyp</option>
+                                <option value="@AccountType.Deposit">Baskonto</option>
+                                <option value="@AccountType.Savings">Sparkonto</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _model.Type)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Valuta</label>
+                            <InputSelect class="form-select" @bind-Value="_model.Currency">
+                                <option value="@CurrencyType.None" disabled>Välj valuta</option>
+                                @foreach (var currency in
+                                                                Enum.GetValues(typeof(CurrencyType)).Cast<CurrencyType>().Where(c => c !=
+                                                                CurrencyType.None))
+                                {
+                                    <option value="@currency">@currency</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => _model.Currency)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Startsaldo</label>
+                            <InputNumber class="form-control" @bind-Value="_model.InitialBalance" max="10000000" step="0.01" inputmode="decimal" />
+                            <ValidationMessage For="@(() => _model.InitialBalance)" />
+                        </div>
+
+                        <button class="btn btn-primary" type="submit">Skapa konto</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Alla konton</h4>
+
+                    @if (_accounts.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Det finns inga konton ännu, registrera ditt första konto!</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Kontonamn</th>
+                                        <th scope="col">Kontotyp</th>
+                                        <th scope="col" class="text-end">Saldo</th>
+                                        <th scope="col">Valuta</th>
+                                        <th scope="col">Uppdaterad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var account in _accounts)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@account.Name</td>
+                                            <td>@GetAccountTypeLabel(account.AccountType)</td>
+                                            <td class="text-end">@account.Balance</td>
+                                            <td>@account.Currency</td>
+                                            <td><small class="text-muted">@account.LastUpdated.ToLocalTime()</small></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateAccountModel _model = new();
+    private List<IBankAccount> _accounts = new();
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _accounts = await AccountService.GetAccounts();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Kunde inte ladda konton: {ex.Message}";
+            Console.Error.WriteLine(ex);
+            _accounts = new List<IBankAccount>();
+        }
+    }
+    private async Task CreateAccountAsync()
+    {
+        try
+        {
+            Console.WriteLine(_model.Name);
+
+            var created = await AccountService.CreateAccount(
+                _model.Name,
+                _model.Type,
+                _model.Currency,
+                _model.InitialBalance
+            );
+
+            _accounts.Add(created);
+            _model.Clear();
+            _errorMessage = null;
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = $"Ogiltigt värde: {ex.Message}";
+            Console.Error.WriteLine(ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _errorMessage = $"Åtgärden kunde inte utföras: {ex.Message}";
+            Console.Error.WriteLine(ex);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Ett oväntat fel uppstod: {ex.Message}";
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+    private static string GetAccountTypeLabel(AccountType type)
+    {
+        return type switch
+        {
+            AccountType.Deposit => "Baskonto",
+            AccountType.Savings => "Sparkonto",
+            _ => "Okänd"
+        };
+    }
+
+    private class CreateAccountModel : IValidatableObject
+    {
+        public string Name { get; set; } = string.Empty;
+        public AccountType Type { get; set; } = AccountType.None;
+        public CurrencyType Currency { get; set; } = CurrencyType.None;
+        public decimal InitialBalance { get; set; } = 0m;
+
+        public void Clear()
+        {
+            Name = string.Empty;
+            Currency = CurrencyType.None;
+            InitialBalance = 0;
+            Type = default;
+        }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                yield return new ValidationResult("Kontonamn krävs.", new[] { nameof(Name) });
+            }
+
+            if (Type == AccountType.None)
+            {
+                yield return new ValidationResult("Välj kontotyp.", new[] { nameof(Type) });
+            }
+
+            if (Currency == CurrencyType.None)
+            {
+                yield return new ValidationResult("Välj valuta.", new[] { nameof(Currency) });
+            }
+
+            if (InitialBalance > 10_000_000m)
+            {
+                yield return new ValidationResult("Startsaldo får max vara 10 000 000.", new[] { nameof(InitialBalance) });
+            }
+        }
+    }
+}
