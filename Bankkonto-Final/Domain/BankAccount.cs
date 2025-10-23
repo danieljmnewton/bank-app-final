@@ -16,6 +16,7 @@ public class Bankkonto : IBankAccount
         Id = Guid.NewGuid();
         Name = name;
         AccountType = accountType;
+        Currency = currency;
         Balance = initialBalance;
         LastUpdated = DateTime.Now;
     }
