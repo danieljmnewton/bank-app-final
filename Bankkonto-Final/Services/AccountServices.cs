@@ -4,20 +4,20 @@ namespace Bankkonto_Final.Services
     public class AccountService : IAccountService
     {
         private const string StorageKey = "bankapp.accounts";
-        private readonly List<IBankAccount> _accounts;
+        private readonly List<Bankkonto> _accounts;
         private readonly IStorageService _storageService;
         private bool isLoaded;
 
         public AccountService(IStorageService storageService)
         {
             _storageService = storageService;
-            _accounts = new List<IBankAccount>();
+            _accounts = new List<Bankkonto>();
         }
 
         private async Task IsInitialized()
         {
             if (isLoaded) return;
-            var fromStorage = await _storageService.GetItemAsync<List<IBankAccount>>(StorageKey);
+            var fromStorage = await _storageService.GetItemAsync<List<Bankkonto>>(StorageKey);
             _accounts.Clear();
             if (fromStorage is { Count: > 0 })
                 _accounts.AddRange(fromStorage);
@@ -32,7 +32,7 @@ namespace Bankkonto_Final.Services
             return _storageService.SetItemAsync(StorageKey, concrete);
         }
 
-        public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
+        public async Task<Bankkonto> CreateAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] CreateAccount requested. Name='{name}', Type={accountType}, Currency={currency}, InitialBalance={initialBalance}.");
@@ -72,21 +72,21 @@ namespace Bankkonto_Final.Services
             return account;
         }
 
-        public async Task<List<IBankAccount>> GetAccounts()
+        public async Task<List<Bankkonto>> GetAccounts()
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] GetAccounts returned {_accounts.Count} account(s).");
-            return _accounts.Cast<IBankAccount>().ToList();
+            return _accounts.Cast<Bankkonto>().ToList();
         }
 
-        public async Task<IBankAccount?> GetAccountById(Guid id)
+        public async Task<Bankkonto?> GetAccountById(Guid id)
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] GetAccountById requested. Id={id}.");
             return _accounts.FirstOrDefault(a => a.Id == id);
         }
 
-        public async Task<IBankAccount?> GetAccountByName(string name, AccountType accountType)
+        public async Task<Bankkonto?> GetAccountByName(string name, AccountType accountType)
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] GetAccountByName requested. Name='{name}', Type={accountType}.");
