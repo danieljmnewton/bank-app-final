@@ -92,7 +92,7 @@
                                             <td class="fw-semibold">@account.Name</td>
                                             <td class="fw-semibold">@account.Id.ToString()[..6]</td>
                                             <td>@GetAccountTypeLabel(account.AccountType)</td>
-                                            <td class="text-end">@account.Balance</td>
+                                            <td class="text-end">@account.Balance.ToString("F2")</td>
                                             <td>@account.Currency</td>
                                             <td><small class="text-muted">@account.LastUpdated.ToLocalTime()</small></td>
                                         </tr>
