@@ -4,7 +4,7 @@
 @inject IAccountService AccountService
 
 <div class="container py-3">
-    <h3 class="mb-4">Vänligen skapa ett konto</h3>
+    <h3 class="mb-4">Accounts</h3>
 
     @if (!string.IsNullOrWhiteSpace(_errorMessage))
     {
@@ -21,25 +21,25 @@
                         <DataAnnotationsValidator />
 
                         <div class="mb-3">
-                            <label class="form-label">Kontonamn</label>
+                            <label class="form-label">Account name</label>
                             <InputText class="form-control" @bind-Value="_model.Name" />
                             <ValidationMessage For="@(() => _model.Name)" />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Kontotyp</label>
+                            <label class="form-label">Account type</label>
                             <InputSelect class="form-select" @bind-Value="_model.Type">
-                                <option value="@AccountType.None" disabled>Välj kontotyp</option>
-                                <option value="@AccountType.Deposit">Baskonto</option>
-                                <option value="@AccountType.Savings">Sparkonto</option>
+                                <option value="@AccountType.None" disabled>Select account type</option>
+                                <option value="@AccountType.Deposit">Basic account</option>
+                                <option value="@AccountType.Savings">Savings account</option>
                             </InputSelect>
                             <ValidationMessage For="@(() => _model.Type)" />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Valuta</label>
+                            <label class="form-label">Currency</label>
                             <InputSelect class="form-select" @bind-Value="_model.Currency">
-                                <option value="@CurrencyType.None" disabled>Välj valuta</option>
+                                <option value="@CurrencyType.None" disabled>Select currency</option>
                                 @foreach (var currency in
                                                                 Enum.GetValues(typeof(CurrencyType)).Cast<CurrencyType>().Where(c => c !=
                                                                 CurrencyType.None))
@@ -51,12 +51,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Startsaldo</label>
+                            <label class="form-label">Initial balance</label>
                             <InputNumber class="form-control" @bind-Value="_model.InitialBalance" max="10000000" step="0.01" inputmode="decimal" />
                             <ValidationMessage For="@(() => _model.InitialBalance)" />
                         </div>
 
-                        <button class="btn btn-primary" type="submit">Skapa konto</button>
+                        <button class="btn btn-primary" type="submit">Create account</button>
                     </EditForm>
                 </div>
             </div>
@@ -65,11 +65,11 @@
         <div class="col-12 col-lg-7">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h4 class="card-title mb-3">Alla konton</h4>
+                    <h4 class="card-title mb-3">All accounts</h4>
 
                     @if (_accounts.Count == 0)
                     {
-                        <p class="text-muted mb-0">Det finns inga konton ännu, registrera ditt första konto!</p>
+                        <p class="text-muted mb-0">No accounts yet, create your first account!</p>
                     }
                     else
                     {
@@ -77,12 +77,12 @@
                             <table class="table table-striped table-hover align-middle">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Kontonamn</th>
-                                        <th scope="col">Kontonummer</th>
-                                        <th scope="col">Kontotyp</th>
-                                        <th scope="col" class="text-end">Saldo</th>
-                                        <th scope="col">Valuta</th>
-                                        <th scope="col">Uppdaterad</th>
+                                        <th scope="col">Account name</th>
+                                        <th scope="col">Account number</th>
+                                        <th scope="col">Account type</th>
+                                        <th scope="col" class="text-end">Balance</th>
+                                        <th scope="col">Currency</th>
+                                        <th scope="col">Updated</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -109,7 +109,7 @@
 
 @code {
     private CreateAccountModel _model = new();
-    private List<Bankkonto> _accounts = new();
+    private List<BankAccount> _accounts = new();
     private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
@@ -120,9 +120,9 @@
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Kunde inte ladda konton: {ex.Message}";
+            _errorMessage = $"Failed to load accounts: {ex.Message}";
             Console.Error.WriteLine(ex);
-            _accounts = new List<Bankkonto>();
+            _accounts = new List<BankAccount>();
         }
     }
     private async Task CreateAccountAsync()
@@ -144,17 +144,17 @@
         }
         catch (ArgumentException ex)
         {
-            _errorMessage = $"Ogiltigt värde: {ex.Message}";
+            _errorMessage = $"Invalid value: {ex.Message}";
             Console.Error.WriteLine(ex);
         }
         catch (InvalidOperationException ex)
         {
-            _errorMessage = $"Åtgärden kunde inte utföras: {ex.Message}";
+            _errorMessage = $"The action could not be completed: {ex.Message}";
             Console.Error.WriteLine(ex);
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Ett oväntat fel uppstod: {ex.Message}";
+            _errorMessage = $"An unexpected error occurred: {ex.Message}";
             Console.Error.WriteLine(ex);
         }
     }
@@ -163,9 +163,9 @@
     {
         return type switch
         {
-            AccountType.Deposit => "Baskonto",
-            AccountType.Savings => "Sparkonto",
-            _ => "Okänd"
+            AccountType.Deposit => "Basic account",
+            AccountType.Savings => "Savings account",
+            _ => "Unknown"
         };
     }
 
@@ -188,22 +188,22 @@
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                yield return new ValidationResult("Kontonamn krävs.", new[] { nameof(Name) });
+                yield return new ValidationResult("Account name is required.", new[] { nameof(Name) });
             }
 
             if (Type == AccountType.None)
             {
-                yield return new ValidationResult("Välj kontotyp.", new[] { nameof(Type) });
+                yield return new ValidationResult("Select account type.", new[] { nameof(Type) });
             }
 
             if (Currency == CurrencyType.None)
             {
-                yield return new ValidationResult("Välj valuta.", new[] { nameof(Currency) });
+                yield return new ValidationResult("Select currency.", new[] { nameof(Currency) });
             }
 
             if (InitialBalance > 10_000_000m)
             {
-                yield return new ValidationResult("Startsaldo får max vara 10 000 000.", new[] { nameof(InitialBalance) });
+                yield return new ValidationResult("Initial balance may be at most 10,000,000.", new[] { nameof(InitialBalance) });
             }
         }
     }

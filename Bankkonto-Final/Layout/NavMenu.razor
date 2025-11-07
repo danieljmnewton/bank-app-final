@@ -1,6 +1,6 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">Bankapp av Daniel</a>
+        <a class="navbar-brand" href="">Bank App by Daniel</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -11,12 +11,17 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Konton
+                <span class="bi" aria-hidden="true"></span> Accounts
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="Payments" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Transaktioner
+                <span class="bi" aria-hidden="true"></span> Transactions
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="History" Match="NavLinkMatch.All">
+                <span class="bi" aria-hidden="true"></span> History
             </NavLink>
         </div>
     </nav>

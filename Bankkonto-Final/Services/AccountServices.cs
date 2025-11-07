@@ -4,20 +4,20 @@ namespace Bankkonto_Final.Services
     public class AccountService : IAccountService
     {
         private const string StorageKey = "bankapp.accounts";
-        private readonly List<Bankkonto> _accounts;
+        private readonly List<BankAccount> _accounts;
         private readonly IStorageService _storageService;
         private bool isLoaded;
 
         public AccountService(IStorageService storageService)
         {
             _storageService = storageService;
-            _accounts = new List<Bankkonto>();
+            _accounts = new List<BankAccount>();
         }
 
         private async Task IsInitialized()
         {
             if (isLoaded) return;
-            var fromStorage = await _storageService.GetItemAsync<List<Bankkonto>>(StorageKey);
+            var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
             _accounts.Clear();
             if (fromStorage is { Count: > 0 })
                 _accounts.AddRange(fromStorage);
@@ -27,34 +27,34 @@ namespace Bankkonto_Final.Services
 
         private Task SaveAsync()
         {
-            var concrete = _accounts.Select(a => (Bankkonto)a).ToList();
-            Console.WriteLine($"[AccountService] Saving {concrete.Count} account(s) to storage.");
-            return _storageService.SetItemAsync(StorageKey, concrete);
+            var list = _accounts.ToList();
+            Console.WriteLine($"[AccountService] Saving {list.Count} account(s) to storage.");
+            return _storageService.SetItemAsync(StorageKey, list);
         }
 
-        public async Task<Bankkonto> CreateAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
+        public async Task<BankAccount> CreateAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] CreateAccount requested. Name='{name}', Type={accountType}, Currency={currency}, InitialBalance={initialBalance}.");
             if (string.IsNullOrWhiteSpace(name))
             {
-                Console.WriteLine("[AccountService] CreateAccount failed: Kontonamn krävs.");
-                throw new ArgumentException("Kontonamn krävs.", nameof(name));
+                Console.WriteLine("[AccountService] CreateAccount failed: Account name is required.");
+                throw new ArgumentException("Account name is required.", nameof(name));
             }
             if (accountType == AccountType.None)
             {
-                Console.WriteLine("[AccountService] CreateAccount failed: Välj kontotyp.");
-                throw new ArgumentException("Välj kontotyp.", nameof(accountType));
+                Console.WriteLine("[AccountService] CreateAccount failed: Select an account type.");
+                throw new ArgumentException("Select an account type.", nameof(accountType));
             }
             if (currency == CurrencyType.None)
             {
-                Console.WriteLine("[AccountService] CreateAccount failed: Välj valuta.");
-                throw new ArgumentException("Välj valuta.", nameof(currency));
+                Console.WriteLine("[AccountService] CreateAccount failed: Select a currency.");
+                throw new ArgumentException("Select a currency.", nameof(currency));
             }
             if (initialBalance < 0)
             {
-                Console.WriteLine("[AccountService] CreateAccount failed: Startsaldo kan inte vara negativt.");
-                throw new ArgumentException("Startsaldo kan inte vara negativt.", nameof(initialBalance));
+                Console.WriteLine("[AccountService] CreateAccount failed: Initial balance cannot be negative.");
+                throw new ArgumentException("Initial balance cannot be negative.", nameof(initialBalance));
             }
 
             var exists = _accounts.Any(a =>
@@ -62,31 +62,31 @@ namespace Bankkonto_Final.Services
             if (exists)
             {
                 Console.WriteLine("[AccountService] CreateAccount failed: Duplicate account.");
-                throw new InvalidOperationException("Ett konto med samma namn och kontotyp finns redan.");
+                throw new InvalidOperationException("An account with the same name and type already exists.");
             }
 
-            var account = new Bankkonto(name, accountType, currency, initialBalance);
+            var account = new BankAccount(name, accountType, currency, initialBalance);
             _accounts.Add(account);
             await SaveAsync();
             Console.WriteLine($"[AccountService] Account created. Id={account.Id}, Name='{account.Name}', Type={account.AccountType}, Currency={account.Currency}, Balance={account.Balance}.");
             return account;
         }
 
-        public async Task<List<Bankkonto>> GetAccounts()
+        public async Task<List<BankAccount>> GetAccounts()
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] GetAccounts returned {_accounts.Count} account(s).");
-            return _accounts.Cast<Bankkonto>().ToList();
+            return _accounts.ToList();
         }
 
-        public async Task<Bankkonto?> GetAccountById(Guid id)
+        public async Task<BankAccount?> GetAccountById(Guid id)
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] GetAccountById requested. Id={id}.");
             return _accounts.FirstOrDefault(a => a.Id == id);
         }
 
-        public async Task<Bankkonto?> GetAccountByName(string name, AccountType accountType)
+        public async Task<BankAccount?> GetAccountByName(string name, AccountType accountType)
         {
             await IsInitialized();
             Console.WriteLine($"[AccountService] GetAccountByName requested. Name='{name}', Type={accountType}.");
@@ -100,8 +100,8 @@ namespace Bankkonto_Final.Services
             var account = _accounts.FirstOrDefault(a => a.Id == accountId);
             if (account is null)
             {
-                Console.WriteLine("[AccountService] Deposit failed: Konto hittades inte.");
-                throw new InvalidOperationException("Konto hittades inte.");
+                Console.WriteLine("[AccountService] Deposit failed: Account not found.");
+                throw new InvalidOperationException("Account not found.");
             }
             account.Deposit(amount);
             Console.WriteLine($"[AccountService] Deposit completed. AccountId={accountId}, NewBalance={account.Balance}.");
@@ -115,8 +115,8 @@ namespace Bankkonto_Final.Services
             var account = _accounts.FirstOrDefault(a => a.Id == accountId);
             if (account is null)
             {
-                Console.WriteLine("[AccountService] Withdraw failed: Konto hittades inte.");
-                throw new InvalidOperationException("Konto hittades inte.");
+                Console.WriteLine("[AccountService] Withdraw failed: Account not found.");
+                throw new InvalidOperationException("Account not found.");
             }
             account.Withdraw(amount);
             Console.WriteLine($"[AccountService] Withdraw completed. AccountId={accountId}, NewBalance={account.Balance}.");
@@ -129,28 +129,28 @@ namespace Bankkonto_Final.Services
 
             if (fromAccountId == toAccountId)
             {
-                Console.WriteLine("[AccountService] Transfer failed: Från- och till-konto måste vara olika.");
-                throw new ArgumentException("Från- och till-konto måste vara olika.");
+                Console.WriteLine("[AccountService] Transfer failed: From and To accounts must be different.");
+                throw new ArgumentException("From and To accounts must be different.");
             }
 
             Console.WriteLine($"[AccountService] Transfer requested. From={fromAccountId}, To={toAccountId}, Amount={amount}.");
             var from = _accounts.FirstOrDefault(a => a.Id == fromAccountId);
             if (from is null)
             {
-                Console.WriteLine("[AccountService] Transfer failed: Från-kontot hittades inte.");
-                throw new InvalidOperationException("Från-kontot hittades inte.");
+                Console.WriteLine("[AccountService] Transfer failed: From account not found.");
+                throw new InvalidOperationException("From account not found.");
             }
             var to = _accounts.FirstOrDefault(a => a.Id == toAccountId);
             if (to is null)
             {
-                Console.WriteLine("[AccountService] Transfer failed: Till-kontot hittades inte.");
-                throw new InvalidOperationException("Till-kontot hittades inte.");
+                Console.WriteLine("[AccountService] Transfer failed: To account not found.");
+                throw new InvalidOperationException("To account not found.");
             }
 
             if (from.Currency != to.Currency)
             {
-                Console.WriteLine("[AccountService] Transfer failed: Överföring mellan olika valutor stöds inte.");
-                throw new InvalidOperationException("Överföring mellan olika valutor stöds inte.");
+                Console.WriteLine("[AccountService] Transfer failed: Transfers between different currencies are not supported.");
+                throw new InvalidOperationException("Transfers between different currencies are not supported.");
             }
 
             var fromBefore = from.Balance;

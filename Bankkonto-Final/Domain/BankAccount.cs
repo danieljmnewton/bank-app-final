@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Bankkonto_Final.Domain;
 
-public class Bankkonto : IBankAccount
+public class BankAccount : IBankAccount
 {
     public Guid Id { get; private set; }
     public string Name { get; private set; }
@@ -11,7 +11,7 @@ public class Bankkonto : IBankAccount
     public decimal Balance { get; private set; }
     public DateTime LastUpdated { get; private set; }
 
-    public Bankkonto(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
+    public BankAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
     {
         Id = Guid.NewGuid();
         Name = name;
@@ -23,7 +23,7 @@ public class Bankkonto : IBankAccount
 
     [JsonConstructor]
 
-    public Bankkonto(Guid id, string name, AccountType accountType, CurrencyType currency, decimal balance, DateTime lastUpdated)
+    public BankAccount(Guid id, string name, AccountType accountType, CurrencyType currency, decimal balance, DateTime lastUpdated)
     {
         Id = id == default ? Guid.NewGuid() : id;
         Name = name;
