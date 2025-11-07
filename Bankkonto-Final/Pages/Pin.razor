@@ -27,6 +27,9 @@
     private string _pin = string.Empty;
     private string? _error;
 
+    /// <summary>
+    /// Redirects to CreateAccount when already unlocked.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await PinLock.InitializeAsync();
@@ -36,6 +39,9 @@
         }
     }
 
+    /// <summary>
+    /// Attempts to unlock using the entered PIN.
+    /// </summary>
     private async Task UnlockAsync()
     {
         _error = null;

@@ -1,4 +1,4 @@
-using Bankkonto_Final;
+using BankAccount_Final;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 

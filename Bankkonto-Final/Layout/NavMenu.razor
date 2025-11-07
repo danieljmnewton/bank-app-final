@@ -53,6 +53,9 @@
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    /// <summary>
+    /// Initializes lock state and subscribes to changes.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         PinLock.OnChange += OnLockStateChanged;
@@ -60,17 +63,26 @@
         _isUnlocked = PinLock.IsUnlocked;
     }
 
+    /// <summary>
+    /// Updates UI when lock state changes.
+    /// </summary>
     private void OnLockStateChanged()
     {
         _isUnlocked = PinLock.IsUnlocked;
         InvokeAsync(StateHasChanged);
     }
 
+    /// <summary>
+    /// Toggles the nav menu collapse state.
+    /// </summary>
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
 
+    /// <summary>
+    /// Unsubscribes from events.
+    /// </summary>
     public void Dispose()
     {
         PinLock.OnChange -= OnLockStateChanged;

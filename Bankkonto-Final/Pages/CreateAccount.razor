@@ -113,6 +113,9 @@
     private List<BankAccount> _accounts = new();
     private string? _errorMessage;
 
+    /// <summary>
+    /// Initializes the page and loads existing accounts. Redirects to PIN page if locked.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await PinLock.InitializeAsync();
@@ -133,6 +136,9 @@
             _accounts = new List<BankAccount>();
         }
     }
+    /// <summary>
+    /// Handles account creation form submission.
+    /// </summary>
     private async Task CreateAccountAsync()
     {
         try
@@ -167,6 +173,9 @@
         }
     }
 
+    /// <summary>
+    /// Returns a human-readable label for an account type.
+    /// </summary>
     private static string GetAccountTypeLabel(AccountType type)
     {
         return type switch
@@ -192,6 +201,9 @@
             Type = default;
         }
 
+        /// <summary>
+        /// Validates the form input fields.
+        /// </summary>
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (string.IsNullOrWhiteSpace(Name))

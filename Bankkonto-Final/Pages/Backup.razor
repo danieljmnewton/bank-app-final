@@ -2,16 +2,16 @@
 @inject IAccountService AccountService
 @inject IJSRuntime JS
 
-<h3>Backup & Återställning</h3>
+<h3>Backup & Restore</h3>
 
-<button class="btn btn-primary" @onclick="Export">Kopiera JSON</button>
+<button class="btn btn-primary" @onclick="Export">Copy JSON</button>
 
 <div class="mt-4">
-    <label>Klistra in JSON här för import</label>
+    <label>Paste JSON here to import</label>
     <InputTextArea class="form-control" @bind-Value="json" rows="10" />
     <div class="mt-2">
-        <!--<button class="btn btn-success" @onclick="() => Import(true)">Importera (ersätt allt)</button>-->
-        <button class="btn btn-secondary ms-2" @onclick="() => Import(false)">Importera (merga)</button>
+        <!--<button class="btn btn-success" @onclick="() => Import(true)">Import (replace all)</button>-->
+        <button class="btn btn-secondary ms-2" @onclick="() => Import(false)">Import (merge)</button>
     </div>
     
 </div>
@@ -22,19 +22,26 @@
         <ul>@foreach (var e in errors) { <li>@e</li> }</ul>
     </div>
 }
-@if (ok) { <div class="alert alert-success mt-3">Import klar!</div> }
+@if (ok) { <div class="alert alert-success mt-3">Import complete!</div> }
 
 @code {
     private string json = "";
     private List<string>? errors;
     private bool ok;
 
+    /// <summary>
+    /// Copies the exported accounts JSON to the clipboard.
+    /// </summary>
     private async Task Export()
     {
         var data = await AccountService.ExportJsonAsync();
         await JS.InvokeVoidAsync("navigator.clipboard.writeText", data);
     }
 
+    /// <summary>
+    /// Imports accounts from the JSON text area.
+    /// </summary>
+    /// <param name="replace">If true, replace existing accounts; otherwise merge.</param>
     private async Task Import(bool replace)
     {
         ok = false; errors = null;

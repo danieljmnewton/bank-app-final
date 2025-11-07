@@ -1,4 +1,4 @@
-namespace Bankkonto_Final.Domain;
+namespace BankAccount_Final.Domain;
 
 public enum AccountType
 {

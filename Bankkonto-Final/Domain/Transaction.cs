@@ -1,4 +1,4 @@
-namespace Bankkonto_Final.Domain;
+namespace BankAccount_Final.Domain;
 
 public class Transaction
 {
@@ -15,6 +15,10 @@ public class Transaction
     public string? Note { get; set; }
     public ExpenseCategory Category { get; set; } = ExpenseCategory.None;
 
+    /// <summary>
+    /// Creates and persists a deposit transaction, and updates the account.
+    /// </summary>
+    /// <returns>The created transaction.</returns>
     public static async Task<Transaction> DepositAsync(
         IAccountService accountService,
         ITransactionService transactionService,
@@ -39,6 +43,10 @@ public class Transaction
         return record;
     }
 
+    /// <summary>
+    /// Creates and persists a withdrawal transaction, and updates the account.
+    /// </summary>
+    /// <returns>The created transaction.</returns>
     public static async Task<Transaction> WithdrawAsync(
         IAccountService accountService,
         ITransactionService transactionService,
@@ -65,6 +73,10 @@ public class Transaction
         return record;
     }
 
+    /// <summary>
+    /// Creates and persists transfer transactions (debit and credit), and updates both accounts.
+    /// </summary>
+    /// <returns>The created debit and credit transactions.</returns>
     public static async Task<(Transaction debit, Transaction credit)> TransferAsync(
         IAccountService accountService,
         ITransactionService transactionService,

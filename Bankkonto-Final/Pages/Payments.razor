@@ -4,7 +4,7 @@
 @inject ITransactionService Transaction
 @inject IPinLockService PinLock
 @inject NavigationManager Nav
-@using Bankkonto_Final.Domain
+@using BankAccount_Final.Domain
 
 <div class="container py-3">
     <h3 class="mb-4">Transactions</h3>
@@ -235,6 +235,9 @@
     private WithdrawModel _withdraw = new();
     private TransferModel _transfer = new();
 
+    /// <summary>
+    /// Initializes the page and loads accounts. Redirects to PIN page if locked.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await PinLock.InitializeAsync();
@@ -256,6 +259,9 @@
         }
     }
 
+    /// <summary>
+    /// Handles deposit form submission and records a deposit.
+    /// </summary>
     private async Task DepositAsync()
     {
         try
@@ -278,7 +284,7 @@
                 return;
             }
 
-            await Bankkonto_Final.Domain.Transaction.DepositAsync(AccountService, Transaction, account, _deposit.Amount);
+            await BankAccount_Final.Domain.Transaction.DepositAsync(AccountService, Transaction, account, _deposit.Amount);
 
             _depositInfo = $"Deposited {_deposit.Amount.ToString("F2")} {account.Currency} to '{account.Id.ToString()[..6]}'.";
         }
@@ -296,6 +302,9 @@
         }
     }
 
+    /// <summary>
+    /// Handles withdrawal form submission and records a withdrawal.
+    /// </summary>
     private async Task WithdrawAsync()
     {
         try
@@ -318,7 +327,7 @@
                 return;
             }
 
-            await Bankkonto_Final.Domain.Transaction.WithdrawAsync(AccountService, Transaction, account, _withdraw.Amount, _withdraw.Category);
+            await BankAccount_Final.Domain.Transaction.WithdrawAsync(AccountService, Transaction, account, _withdraw.Amount, _withdraw.Category);
 
             _withdrawInfo = $"Withdrew {_withdraw.Amount.ToString("F2")} {account.Currency} from '{account.Id.ToString()[..6]}'.";
         }
@@ -336,6 +345,9 @@
         }
     }
 
+    /// <summary>
+    /// Handles transfer form submission and records a transfer.
+    /// </summary>
     private async Task TransferAsync()
     {
         try
@@ -371,7 +383,7 @@
                 return;
             }
 
-            await Bankkonto_Final.Domain.Transaction.TransferAsync(AccountService, Transaction, from, to, _transfer.Amount, _transfer.Note, _transfer.Category);
+            await BankAccount_Final.Domain.Transaction.TransferAsync(AccountService, Transaction, from, to, _transfer.Amount, _transfer.Note, _transfer.Category);
 
             _transferInfo = $"Transferred {_transfer.Amount.ToString("F2")} {from.Currency} from '{from.Id.ToString()[..6]}' to '{to.Id.ToString()[..6]}'.";
         }
@@ -389,6 +401,9 @@
         }
     }
 
+    /// <summary>
+    /// Returns a human-readable label for an account type.
+    /// </summary>
     private static string GetAccountTypeLabel(AccountType type)
     {
         return type switch
@@ -478,6 +493,9 @@
         ExpenseCategory.Transport
     };
 
+    /// <summary>
+    /// Returns a human-readable label for a category.
+    /// </summary>
     private static string GetCategoryLabel(ExpenseCategory category) => category switch
     {
         ExpenseCategory.None => "No category",

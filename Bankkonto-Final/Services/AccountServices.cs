@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Bankkonto_Final.Services
+namespace BankAccount_Final.Services
 
 {
     public class AccountService : IAccountService
@@ -21,12 +21,19 @@ namespace Bankkonto_Final.Services
             Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
         };
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="AccountService"/>.
+        /// </summary>
+        /// <param name="storageService">Storage service used for persisting data.</param>
         public AccountService(IStorageService storageService)
         {
             _storageService = storageService;
             _accounts = new List<BankAccount>();
         }
 
+        /// <summary>
+        /// Loads accounts from storage on first use.
+        /// </summary>
         private async Task IsInitialized()
         {
             if (isLoaded) return;
@@ -38,6 +45,9 @@ namespace Bankkonto_Final.Services
             Console.WriteLine($"[AccountService] Initialized. Loaded {_accounts.Count} account(s) from storage.");
         }
 
+        /// <summary>
+        /// Saves the current account list to storage.
+        /// </summary>
         private Task SaveAsync()
         {
             var list = _accounts.ToList();
@@ -45,6 +55,16 @@ namespace Bankkonto_Final.Services
             return _storageService.SetItemAsync(StorageKey, list);
         }
 
+        /// <summary>
+        /// Creates a new account and persists it.
+        /// </summary>
+        /// <param name="name">Account name.</param>
+        /// <param name="accountType">Account type.</param>
+        /// <param name="currency">Account currency.</param>
+        /// <param name="initialBalance">Initial balance (non-negative).</param>
+        /// <returns>The created account.</returns>
+        /// <exception cref="ArgumentException">If name, accountType or currency are invalid, or balance is negative.</exception>
+        /// <exception cref="InvalidOperationException">If a duplicate account exists.</exception>
         public async Task<BankAccount> CreateAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
         {
             await IsInitialized();
@@ -85,6 +105,10 @@ namespace Bankkonto_Final.Services
             return account;
         }
 
+        /// <summary>
+        /// Gets all accounts.
+        /// </summary>
+        /// <returns>List of all accounts.</returns>
         public async Task<List<BankAccount>> GetAccounts()
         {
             await IsInitialized();
@@ -92,6 +116,11 @@ namespace Bankkonto_Final.Services
             return _accounts.ToList();
         }
 
+        /// <summary>
+        /// Gets an account by its unique identifier.
+        /// </summary>
+        /// <param name="id">The account identifier.</param>
+        /// <returns>The account if found; otherwise null.</returns>
         public async Task<BankAccount?> GetAccountById(Guid id)
         {
             await IsInitialized();
@@ -99,6 +128,12 @@ namespace Bankkonto_Final.Services
             return _accounts.FirstOrDefault(a => a.Id == id);
         }
 
+        /// <summary>
+        /// Gets an account by its name and type.
+        /// </summary>
+        /// <param name="name">Account name.</param>
+        /// <param name="accountType">Account type.</param>
+        /// <returns>The account if found; otherwise null.</returns>
         public async Task<BankAccount?> GetAccountByName(string name, AccountType accountType)
         {
             await IsInitialized();
@@ -106,6 +141,12 @@ namespace Bankkonto_Final.Services
             return _accounts.FirstOrDefault(a => a.AccountType == accountType && string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>
+        /// Deposits an amount into the specified account.
+        /// </summary>
+        /// <param name="accountId">Target account ID.</param>
+        /// <param name="amount">Amount to deposit (must be positive).</param>
+        /// <exception cref="InvalidOperationException">If the account is not found.</exception>
         public async Task DepositAsync(Guid accountId, decimal amount)
         {
             await IsInitialized();
@@ -121,6 +162,12 @@ namespace Bankkonto_Final.Services
             await SaveAsync();
         }
 
+        /// <summary>
+        /// Withdraws an amount from the specified account.
+        /// </summary>
+        /// <param name="accountId">Source account ID.</param>
+        /// <param name="amount">Amount to withdraw (must be positive and not exceed balance).</param>
+        /// <exception cref="InvalidOperationException">If the account is not found.</exception>
         public async Task WithdrawAsync(Guid accountId, decimal amount)
         {
             await IsInitialized();
@@ -136,6 +183,14 @@ namespace Bankkonto_Final.Services
             await SaveAsync();
         }
 
+        /// <summary>
+        /// Transfers an amount between two accounts.
+        /// </summary>
+        /// <param name="fromAccountId">Source account ID.</param>
+        /// <param name="toAccountId">Destination account ID.</param>
+        /// <param name="amount">Amount to transfer.</param>
+        /// <exception cref="ArgumentException">If source and destination are the same account.</exception>
+        /// <exception cref="InvalidOperationException">If accounts are missing or currencies differ.</exception>
         public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
             await IsInitialized();
@@ -176,7 +231,7 @@ namespace Bankkonto_Final.Services
         }
 
         /// <summary>
-        /// JSON Export
+        /// Exports all accounts as a JSON string.
         /// </summary>
         public async Task<string> ExportJsonAsync()
         {
@@ -185,8 +240,11 @@ namespace Bankkonto_Final.Services
         }
 
         /// <summary>
-        /// JSON Import
+        /// Imports accounts from a JSON string, replacing or merging with existing data.
         /// </summary>
+        /// <param name="json">JSON content to import.</param>
+        /// <param name="replaceExisting">If true, replaces existing accounts; otherwise merges.</param>
+        /// <returns>A list of error messages, or empty on success.</returns>
         public async Task<List<string>> ImportJsonAsync(string json, bool replaceExisting = false)
         {
             var errors = new List<string>();
