@@ -13,6 +13,7 @@ public class Transaction
     public DateTime Timestamp { get; set; } = DateTime.Now;
     public TransactionType Type { get; set; }
     public string? Note { get; set; }
+    public ExpenseCategory Category { get; set; } = ExpenseCategory.None;
 
     public static async Task<Transaction> DepositAsync(
         IAccountService accountService,
@@ -42,7 +43,8 @@ public class Transaction
         IAccountService accountService,
         ITransactionService transactionService,
         IBankAccount account,
-        decimal amount)
+        decimal amount,
+        ExpenseCategory category = ExpenseCategory.None)
     {
         await accountService.WithdrawAsync(account.Id, amount);
 
@@ -55,7 +57,8 @@ public class Transaction
             Amount = amount,
             BalanceAfter = account.Balance,
             Timestamp = DateTime.Now,
-            Type = TransactionType.Withdrawal
+            Type = TransactionType.Withdrawal,
+            Category = category
         };
 
         await transactionService.AddAsync(record);
@@ -68,7 +71,8 @@ public class Transaction
         IBankAccount from,
         IBankAccount to,
         decimal amount,
-        string? note = null)
+        string? note = null,
+        ExpenseCategory category = ExpenseCategory.None)
     {
         await accountService.TransferAsync(from.Id, to.Id, amount);
 
@@ -83,7 +87,8 @@ public class Transaction
             BalanceAfter = from.Balance,
             Timestamp = DateTime.Now,
             Type = TransactionType.Transfer,
-            Note = note
+            Note = note,
+            Category = category
         };
 
         var credit = new Transaction
@@ -97,7 +102,8 @@ public class Transaction
             BalanceAfter = to.Balance,
             Timestamp = DateTime.Now,
             Type = TransactionType.Transfer,
-            Note = note
+            Note = note,
+            Category = category
         };
 
         await transactionService.AddAsync(debit);

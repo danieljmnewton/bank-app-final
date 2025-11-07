@@ -4,6 +4,7 @@
 @inject ITransactionService Transaction
 @inject IPinLockService PinLock
 @inject NavigationManager Nav
+@using Bankkonto_Final.Domain
 
 <div class="container py-3">
     <h3 class="mb-4">Transactions</h3>
@@ -83,6 +84,16 @@
                             <ValidationMessage For="@(() => _withdraw.Amount)" />
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <InputSelect class="form-select" @bind-Value="_withdraw.Category">
+                                @foreach (var c in Categories)
+                                {
+                                    <option value="@c">@GetCategoryLabel(c)</option>
+                                }
+                            </InputSelect>
+                        </div>
+
                         <div class="d-flex gap-2">
                             <button class="btn btn-warning" type="submit" disabled="@(!_accounts.Any())">
                                 Withdraw
@@ -134,6 +145,16 @@
                             <label class="form-label">Amount</label>
                             <InputNumber @bind-Value="_transfer.Amount" class="form-control" min="1" max="10000000" step="0.01" inputmode="decimal" />
                             <ValidationMessage For="@(() => _transfer.Amount)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <InputSelect class="form-select" @bind-Value="_transfer.Category">
+                                @foreach (var c in Categories)
+                                {
+                                    <option value="@c">@GetCategoryLabel(c)</option>
+                                }
+                            </InputSelect>
                         </div>
 
                         <div class="mb-3">
@@ -297,7 +318,7 @@
                 return;
             }
 
-            await Bankkonto_Final.Domain.Transaction.WithdrawAsync(AccountService, Transaction, account, _withdraw.Amount);
+            await Bankkonto_Final.Domain.Transaction.WithdrawAsync(AccountService, Transaction, account, _withdraw.Amount, _withdraw.Category);
 
             _withdrawInfo = $"Withdrew {_withdraw.Amount.ToString("F2")} {account.Currency} from '{account.Id.ToString()[..6]}'.";
         }
@@ -350,7 +371,7 @@
                 return;
             }
 
-            await Bankkonto_Final.Domain.Transaction.TransferAsync(AccountService, Transaction, from, to, _transfer.Amount, _transfer.Note);
+            await Bankkonto_Final.Domain.Transaction.TransferAsync(AccountService, Transaction, from, to, _transfer.Amount, _transfer.Note, _transfer.Category);
 
             _transferInfo = $"Transferred {_transfer.Amount.ToString("F2")} {from.Currency} from '{from.Id.ToString()[..6]}' to '{to.Id.ToString()[..6]}'.";
         }
@@ -403,6 +424,8 @@
 
         [Range(typeof(decimal), "1", "10000000", ErrorMessage = "Amount must be between 1 and 10,000,000.")]
         public decimal Amount { get; set; } = 0m;
+
+        public ExpenseCategory Category { get; set; } = ExpenseCategory.None;
     }
 
     private class TransferModel
@@ -418,6 +441,8 @@
 
         [Required(ErrorMessage = "Enter a note for the transfer.")]
         public string Note { get; set; } = string.Empty;
+
+        public ExpenseCategory Category { get; set; } = ExpenseCategory.None;
     }
 
     private Guid FromId
@@ -445,4 +470,20 @@
             }
         }
     }
+    private static readonly ExpenseCategory[] Categories = new[]
+    {
+        ExpenseCategory.None,
+        ExpenseCategory.Food,
+        ExpenseCategory.Rent,
+        ExpenseCategory.Transport
+    };
+
+    private static string GetCategoryLabel(ExpenseCategory category) => category switch
+    {
+        ExpenseCategory.None => "No category",
+        ExpenseCategory.Food => "Food",
+        ExpenseCategory.Rent => "Rent",
+        ExpenseCategory.Transport => "Transport",
+        _ => category.ToString()
+    };
 }

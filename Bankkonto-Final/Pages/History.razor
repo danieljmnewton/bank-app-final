@@ -32,6 +32,16 @@
                     <option value="Transfer">Transfer</option>
                 </select>
             </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">Category</label>
+                <select class="form-select" value="@CategoryFilterString" @onchange="OnCategoryFilterChanged">
+                    <option value="">All categories</option>
+                    <option value="None">No category</option>
+                    <option value="Food">Food</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Transport">Transport</option>
+                </select>
+            </div>
             <div class="col-6 col-md-2">
                 <label class="form-label d-block">&nbsp;</label>
                 <button class="btn btn-outline-secondary w-100" @onclick="ClearFilters">Clear filters</button>
@@ -44,6 +54,7 @@
                     <tr>
                         <th>Time</th>
                         <th>Type</th>
+                        <th>Category</th>
                         <th>Account ID</th>
                         <th class="text-end">Amount</th>
                         <th>Currency</th>
@@ -56,6 +67,7 @@
                         <tr>
                             <td><small class="text-muted">@t.Timestamp.ToLocalTime()</small></td>
                             <td>@GetTransactionTypeLabel(t.Type)</td>
+                            <td>@GetCategoryLabel(t.Category)</td>
                             <td>@ShortId(GetDisplayAccountId(t)) (@GetAccountTypeLabel(t.AccountType))</td>
                             <td class="text-end">@t.Amount.ToString("F2")</td>
                             <td>@t.Currency</td>

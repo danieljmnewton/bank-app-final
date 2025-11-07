@@ -19,3 +19,11 @@ public enum TransactionType
     Withdrawal,
     Transfer
 }
+
+public enum ExpenseCategory
+{
+    None,
+    Food,
+    Rent,
+    Transport
+}

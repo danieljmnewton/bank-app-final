@@ -17,6 +17,7 @@ public partial class History : ComponentBase
     protected DateTime? _fromDate;
     protected DateTime? _toDate;
     protected TransactionType? _typeFilter;
+    protected ExpenseCategory? _categoryFilter;
 
     protected string _sortBy = nameof(Transaction.Timestamp);
     protected bool _sortDesc = true;
@@ -48,6 +49,12 @@ public partial class History : ComponentBase
             {
                 var type = _typeFilter.Value;
                 query = query.Where(t => t.Type == type);
+            }
+
+            if (_categoryFilter is not null)
+            {
+                var cat = _categoryFilter.Value;
+                query = query.Where(t => t.Category == cat);
             }
 
             if (!string.IsNullOrWhiteSpace(_searchQuery))
@@ -126,6 +133,7 @@ public partial class History : ComponentBase
 
     protected void OnSearchChanged(ChangeEventArgs e) => SearchQuery = e?.Value?.ToString();
     protected void OnTypeFilterChanged(ChangeEventArgs e) => TypeFilterString = e?.Value?.ToString() ?? string.Empty;
+    protected void OnCategoryFilterChanged(ChangeEventArgs e) => CategoryFilterString = e?.Value?.ToString() ?? string.Empty;
     protected void OnPageSizeChanged(ChangeEventArgs e)
     {
         if (e?.Value is not null && int.TryParse(e.Value.ToString(), out var size) && size > 0)
@@ -139,6 +147,7 @@ public partial class History : ComponentBase
         _fromDate = null;
         _toDate = null;
         _typeFilter = null;
+        _categoryFilter = null;
         _searchQuery = null;
         _currentPage = 1;
     }
@@ -198,6 +207,15 @@ public partial class History : ComponentBase
         _ => "Unknown"
     };
 
+    protected static string GetCategoryLabel(ExpenseCategory category) => category switch
+    {
+        ExpenseCategory.None => "No category",
+        ExpenseCategory.Food => "Food",
+        ExpenseCategory.Rent => "Rent",
+        ExpenseCategory.Transport => "Transport",
+        _ => category.ToString()
+    };
+
     protected static Guid GetDisplayAccountId(Transaction t) => t.Type switch
     {
         TransactionType.Deposit => t.ToAccountId ?? Guid.Empty,
@@ -210,5 +228,16 @@ public partial class History : ComponentBase
     {
         var s = id.ToString("N");
         return s.Length >= 6 ? s.Substring(0, 6) : s;
+    }
+
+    protected string CategoryFilterString
+    {
+        get => _categoryFilter?.ToString() ?? string.Empty;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value)) _categoryFilter = null;
+            else if (Enum.TryParse<ExpenseCategory>(value, out var parsed)) _categoryFilter = parsed;
+            _currentPage = 1;
+        }
     }
 }
