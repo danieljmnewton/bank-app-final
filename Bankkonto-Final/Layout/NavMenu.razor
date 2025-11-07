@@ -9,31 +9,65 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi" aria-hidden="true"></span> Accounts
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Payments" Match="NavLinkMatch.All">
-                <span class="bi" aria-hidden="true"></span> Transactions
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="History" Match="NavLinkMatch.All">
-                <span class="bi" aria-hidden="true"></span> History
-            </NavLink>
-        </div>
+        @if (!_isUnlocked)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                    <span class="bi" aria-hidden="true"></span> Enter PIN
+                </NavLink>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="CreateAccount" Match="NavLinkMatch.All">
+                    <span class="bi" aria-hidden="true"></span> Accounts
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="Payments" Match="NavLinkMatch.All">
+                    <span class="bi" aria-hidden="true"></span> Transactions
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="History" Match="NavLinkMatch.All">
+                    <span class="bi" aria-hidden="true"></span> History
+                </NavLink>
+            </div>
+        }
     </nav>
+    
 </div>
+
+@implements IDisposable
+@inject IPinLockService PinLock
 
 @code {
     private bool collapseNavMenu = true;
+    private bool _isUnlocked;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        PinLock.OnChange += OnLockStateChanged;
+        await PinLock.InitializeAsync();
+        _isUnlocked = PinLock.IsUnlocked;
+    }
+
+    private void OnLockStateChanged()
+    {
+        _isUnlocked = PinLock.IsUnlocked;
+        InvokeAsync(StateHasChanged);
+    }
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    public void Dispose()
+    {
+        PinLock.OnChange -= OnLockStateChanged;
     }
 }

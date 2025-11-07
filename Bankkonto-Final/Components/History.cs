@@ -5,6 +5,8 @@ namespace Bankkonto_Final.Pages;
 public partial class History : ComponentBase
 {
     [Inject] private ITransactionService TransactionHistory { get; set; } = default!;
+    [Inject] private IPinLockService PinLock { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
 
     protected List<Transaction> _transactions = new();
     protected string? _errorMessage;
@@ -160,6 +162,13 @@ public partial class History : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        await PinLock.InitializeAsync();
+        if (!PinLock.IsUnlocked)
+        {
+            Nav.NavigateTo("/", true);
+            return;
+        }
+
         try
         {
             var items = await TransactionHistory.GetAllAsync();

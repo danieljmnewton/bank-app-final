@@ -1,7 +1,8 @@
 @page "/CreateAccount"
-@page "/"
 @using System.ComponentModel.DataAnnotations
 @inject IAccountService AccountService
+@inject IPinLockService PinLock
+@inject NavigationManager Nav
 
 <div class="container py-3">
     <h3 class="mb-4">Accounts</h3>
@@ -114,6 +115,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await PinLock.InitializeAsync();
+        if (!PinLock.IsUnlocked)
+        {
+            Nav.NavigateTo("/", true);
+            return;
+        }
+
         try
         {
             _accounts = await AccountService.GetAccounts();
