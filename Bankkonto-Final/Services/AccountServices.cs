@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace Bankkonto_Final.Services
 
 {
@@ -7,6 +10,16 @@ namespace Bankkonto_Final.Services
         private readonly List<BankAccount> _accounts;
         private readonly IStorageService _storageService;
         private bool isLoaded;
+
+        /// <summary>
+        /// JSON options for export/import
+        /// </summary>
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        };
 
         public AccountService(IStorageService storageService)
         {
@@ -160,6 +173,65 @@ namespace Bankkonto_Final.Services
             Console.WriteLine($"[AccountService] Transfer completed. From={fromAccountId} {fromBefore}->{from.Balance}, To={toAccountId} {toBefore}->{to.Balance}, Amount={amount}.");
 
             await SaveAsync();
+        }
+
+        /// <summary>
+        /// JSON Export
+        /// </summary>
+        public async Task<string> ExportJsonAsync()
+        {
+            await IsInitialized();
+            return JsonSerializer.Serialize(_accounts, _jsonOptions);
+        }
+
+        /// <summary>
+        /// JSON Import
+        /// </summary>
+        public async Task<List<string>> ImportJsonAsync(string json, bool replaceExisting = false)
+        {
+            var errors = new List<string>();
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                errors.Add("Tom JSON.");
+                return errors;
+            }
+
+            List<BankAccount>? incoming;
+            try
+            {
+                incoming = JsonSerializer.Deserialize<List<BankAccount>>(json, _jsonOptions);
+            }
+            catch
+            {
+                errors.Add("Ogiltig JSON.");
+                return errors;
+            }
+
+            if (incoming is null || incoming.Count == 0)
+            {
+                errors.Add("Ingen data.");
+                return errors;
+            }
+
+            await IsInitialized();
+
+            if (replaceExisting)
+            {
+                _accounts.Clear();
+                _accounts.AddRange(incoming);
+            }
+            else
+            {
+                var existing = _accounts.Select(a => a.Id).ToHashSet();
+                foreach (var a in incoming)
+                {
+                    if (!existing.Contains(a.Id))
+                        _accounts.Add(a);
+                }
+            }
+
+            await SaveAsync();
+            return errors;
         }
     }
 }

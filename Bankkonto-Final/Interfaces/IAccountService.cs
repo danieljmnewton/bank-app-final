@@ -10,5 +10,9 @@ namespace Bankkonto_Final.Interfaces
         Task DepositAsync(Guid accountId, decimal amount);
         Task WithdrawAsync(Guid accountId, decimal amount);
         Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount);
+
+        // Backup/Restore via JSON
+        Task<string> ExportJsonAsync();
+        Task<List<string>> ImportJsonAsync(string json, bool replaceExisting = false);
     }
 }

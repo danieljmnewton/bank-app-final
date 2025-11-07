@@ -1,0 +1,44 @@
+@page "/backup"
+@inject IAccountService AccountService
+@inject IJSRuntime JS
+
+<h3>Backup & Återställning</h3>
+
+<button class="btn btn-primary" @onclick="Export">Kopiera JSON</button>
+
+<div class="mt-4">
+    <label>Klistra in JSON här för import</label>
+    <InputTextArea class="form-control" @bind-Value="json" rows="10" />
+    <div class="mt-2">
+        <!--<button class="btn btn-success" @onclick="() => Import(true)">Importera (ersätt allt)</button>-->
+        <button class="btn btn-secondary ms-2" @onclick="() => Import(false)">Importera (merga)</button>
+    </div>
+    
+</div>
+
+@if (errors?.Count > 0)
+{
+    <div class="alert alert-danger mt-3">
+        <ul>@foreach (var e in errors) { <li>@e</li> }</ul>
+    </div>
+}
+@if (ok) { <div class="alert alert-success mt-3">Import klar!</div> }
+
+@code {
+    private string json = "";
+    private List<string>? errors;
+    private bool ok;
+
+    private async Task Export()
+    {
+        var data = await AccountService.ExportJsonAsync();
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", data);
+    }
+
+    private async Task Import(bool replace)
+    {
+        ok = false; errors = null;
+        var res = await AccountService.ImportJsonAsync(json, replace);
+        if (res.Count == 0) ok = true; else errors = res;
+    }
+}
