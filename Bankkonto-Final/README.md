@@ -1,96 +1,134 @@
-## Funktioner: varför och hur
+## Bank App (Blazor WebAssembly)
 
-### 1) Budget/utgiftskategorier
+Simple personal banking demo built with Blazor WebAssembly. Create accounts, deposit/withdraw, transfer between your own accounts, and browse a searchable/sortable history. Data is stored locally in the browser and can be exported/imported as JSON.
 
-- Varför
-  - Ger snabb överblick över vart pengarna går (t.ex. Mat, Hyra, Transport).
-  - Möjliggör filtrering och enklare rapportering i historiken utan extra datakällor.
-  - Enum håller kategorier konsekventa, lätta att utöka och stabila i JSON.
+- Default PIN: 9867
+- Language: UI in English, code comments in English
 
-- Hur
-  - Datamodell: `ExpenseCategory` definieras i `Domain/Types.cs` (None, Food, Rent, Transport).
-  - Transaktioner bär kategorin via `Transaction.Category` (se `Domain/Transaction.cs`), sätts vid uttag och överföring.
-  - UI: Kategori väljs i `Pages/Payments.razor` via `<InputSelect>`; en enkel lista av tillgängliga kategorier visas för användaren.
-  - Historik: Filtrering på kategori i `Components/History.cs` för att bryta ut kostnader per typ.
+---
 
-- Att utöka
-  - Lägg till nya värden i `ExpenseCategory` och exponera dem i UI (listan i `Payments.razor`).
+## Quick Start
 
-### 2) Export/Import (JSON) med validering
+- Prerequisites: .NET 8 SDK
+- Clone and run:
+  - `git clone https://github.com/danieljmnewton/Bankkonto-FInal.git`
+  - `cd Bankkonto-Final`
+  - `dotnet run`
+- Open the URL that `dotnet run` prints.
+- Log in with the 4‑digit PIN.
 
-- Varför
-  - Manuell backup/restore utan server; lätt att dela, inspektera och felsöka.
-  - Mänskligt läsbart JSON underlättar testning och versionering.
+---
 
-- Hur
-  - Export: `AccountService.ExportJsonAsync()` serialiserar konton med `System.Text.Json` och `JsonStringEnumConverter` (enum som strängar, indenterat JSON).
-  - Import: `AccountService.ImportJsonAsync(json, replaceExisting)` validerar tom sträng, ogiltig JSON och tom lista; returnerar felmeddelanden. Vid merge dedupliceras på `Id`; vid replace ersätts allt.
-  - UI: Sidan `Pages/Backup.razor` kopierar export till urklipp och importerar från en textarea.
-  - Lagring: Underliggande persistens sker i webbläsarens `localStorage` via `Services/StorageService.cs` (JSON in/ut).
+## How To Use
 
-- Användning
-  - Gå till “Backup”. Välj “Copy JSON” för export. Klistra in JSON och klicka “Import (merge)” för att importera data (utan att skriva över allt).
+- Enter the PIN on the start page to unlock.
+- Create accounts on `Accounts` (Savings or Basic account, currency SEK).
+- Make deposits, withdrawals, and transfers between your accounts on `Transactions`.
+- Each operation writes to `History`. Use filters (date range, type, category) and search to find entries.
+- Go to `Backup` to copy all account data as JSON, or paste JSON to import (merge mode keeps existing data).
 
-### 3) Åtkomstskydd: enkel PIN (UI‑lås)
+Note: Data persists in your browser only. Clearing site data or using a different browser/device will reset it.
 
-- Varför
-  - Snabb UI‑spärr för demosyfte/skolprojekt utan backend – hindrar nyfikna blickar men inte en angripare.
-  - Minimalt friktion, enkelt att förstå och testa.
+---
 
-- Hur
-  - Tjänst: `PinLockService` exponerar `IsUnlocked` och sparar låsstatus i `localStorage`.
-  - Upplåsning: Hårdkodad PIN "9867" i `Services/PinLockService.cs` (byt vid behov).
-  - Flöde: Startsidan `Pages/Pin.razor` ber om PIN och navigerar vidare vid godkänd PIN.
-  - Guards: Sidor som `CreateAccount`, `Payments` och `History` skyddar sig och redirectar till PIN-sidan om låst. Menyn (`Layout/NavMenu.razor`) visar bara skyddade sidor när upplåst.
-  - Registrering: Tjänster registreras för DI i `Program.cs`.
+## Features
 
-- Begränsningar
-  - Ingen riktig autentisering eller kryptering; PIN är hårdkodad och status sparas i klartext i `localStorage`. Detta är medvetet, givet kravet “enkel UI‑låsning”.
+- Accounts: create Savings or Basic (Deposit) accounts
+- Transactions: deposit, withdraw, transfer between own accounts
+- Expense categories: Food, Rent, Transport (+ None) for withdrawals and transfers
+- History: filter by date/type/category, full‑text search, sorting and paging
+- Backup: export/import accounts as JSON, with input validation
+- Persistence: stored in `localStorage` (no server required)
+- UI lock: simple PIN lock to hide the app while demoing
 
-- Tips
-  - Byt PIN i `Services/PinLockService.cs`.
-  - Uppgradera senare till riktig auth (t.ex. OIDC) om säkerhet behövs.
+---
 
-## Arkitektur i korthet
+## Features (VG): Why and How
 
-- Lager och gränssnitt
-  - Domänmodeller: `BankAccount`, `Transaction`, enumtyper i `Domain/*`.
-  - Tjänster: `IAccountService`, `ITransactionService`, `IStorageService`, `IPinLockService` med implementationer i `Services/*`.
-  - UI: Razor‑sidor/komponenter i `Pages/*`, `Components/*`, `Layout/*` som bara pratar via tjänstegränssnitt.
-  - DI: Registrerat i `Program.cs` för enkel testbarhet och utbytbarhet.
+### 1) Budget/expense categories
 
-## Tekniska val och avvägningar
+- Why
+  - Provides a quick overview of where the money goes (e.g., Food, Rent, Transport).
+  - Enables filtering and simpler reporting in history without extra data sources.
+  - An enum keeps categories consistent, easy to extend, and stable in JSON.
 
-- Blazor WASM utan backend
-  - + Enkel distribution, låg komplexitet, fungerar helt i webbläsaren.
-  - – All logik och data finns i klienten (säkerhet begränsad). Passar demo/skolprojekt.
+- How
+  - Data model: `ExpenseCategory` is defined in `Domain/Types.cs` (None, Food, Rent, Transport).
+  - Transactions carry the category via `Transaction.Category` (see `Domain/Transaction.cs`), set for withdrawals and transfers.
+  - UI: The category is selected in `Pages/Payments.razor` via `<InputSelect>`; a simple list of available categories is shown.
+  - History: Filtering by category in `Components/History.cs` to break out costs by type.
 
-- `localStorage` för persistens
-  - + Räcker för små datamängder, inga externa beroenden, enkelt API via `IJSRuntime`.
-  - – Klartext, kvot (~5–10 MB), inga transaktioner/nyckelindex. Vid växande data: överväg IndexedDB eller server‑API.
+### 2) Export/Import (JSON) with validation
 
-- JSON‑serialisering med `System.Text.Json`
-  - + Inbyggt i .NET, snabbt och lättviktigt. `JsonStringEnumConverter` + camelCase ger stabilt, läsbart JSON över språk.
-  - `WriteIndented = true` prioriterar läsbarhet framför minimal storlek (rimligt för liten data och enkel debugging).
+- Why
+  - Manual backup/restore without a server; easy to share, inspect, and debug.
+  - Human-readable JSON makes testing and versioning easier.
 
-- Importmerge baserat på `Id` (GUID)
-  - + Förhindrar dubbletter på ett entydigt sätt. Namn/type‑matchning undviks för att slippa kollisioner.
-  - Alternativet “replace” förenklar total återställning utan specialfall.
+- How
+  - Export: `AccountService.ExportJsonAsync()` serializes accounts with `System.Text.Json` and `JsonStringEnumConverter` (enums as strings, indented JSON).
+  - Import: `AccountService.ImportJsonAsync(json, replaceExisting)` validates empty string, invalid JSON, and empty list; returns error messages. On merge it de-duplicates by `Id`; on replace it overwrites everything.
+  - UI: The `Pages/Backup.razor` page copies the export to the clipboard and imports from a textarea.
+  - Storage: Underlying persistence uses the browser’s `localStorage` via `Services/StorageService.cs` (JSON in/out).
 
-- Enum för utgiftskategorier
-  - + Kompilatorsäkerhet, konsekvent UI/JSON, lätt att utöka i kod.
-  - – Mindre flexibelt än fritext. Om användardefinierade taggar behövs kan en separat tagg‑modell införas.
+- Usage
+  - Go to "Backup". Choose "Copy JSON" to export. Paste JSON and click "Import (merge)" to import data (without overwriting everything).
 
-- UI‑lås (PIN) i stället för riktig auth
-  - + Minimalt beroende, snabb att förstå/använda, tillräckligt för att gömma innehåll.
-  - – Ingen verklig säkerhet. För skarp drift: använd riktig autentisering (t.ex. OIDC) och server‑lagring.
+### 3) Access protection: simple PIN (UI lock)
 
-- Felhantering och loggning
-  - Tjänster använder guard‑checks och returnerar fel (t.ex. lista vid import). Konsolutskrift räcker för felsökning i demo.
+- Why
+  - Quick UI lock for demo/school projects without a backend — deters casual viewing but not an attacker.
+  - Minimal friction, easy to understand and test.
 
-## Framtida förbättringar
+- How
+  - Service: `PinLockService` exposes `IsUnlocked` and saves the lock state in `localStorage`.
+  - Unlocking: Hard-coded PIN "9867" in `Services/PinLockService.cs` (change if needed).
+  - Flow: The start page `Pages/Pin.razor` asks for the PIN and navigates on success.
+  - Guards: Pages like `CreateAccount`, `Payments`, and `History` protect themselves and redirect to the PIN page if locked. The menu (`Layout/NavMenu.razor`) shows protected pages only when unlocked.
+  - Registration: Services are registered for DI in `Program.cs`.
 
-- Riktig autentisering/auktorisering och server‑lagring av data.
-- Byt `localStorage` mot IndexedDB för större datamängder och bättre robusthet.
-- Användaregendefinierade kategorier/taggar med enkel sökbarhet.
-- Export/import av både konton och transaktionshistorik samt checksummor för integritet.
+- Limitations
+  - No real authentication or encryption; the PIN is hard-coded and the status is stored in clear text in `localStorage`. This is intentional, given the requirement for a "simple UI lock".
+
+## Architecture at a Glance
+
+- Layers and interfaces
+  - Domain models: `BankAccount`, `Transaction`, enum types in `Domain/*`.
+  - Services: `IAccountService`, `ITransactionService`, `IStorageService`, `IPinLockService` with implementations in `Services/*`.
+  - UI: Razor pages/components in `Pages/*`, `Components/*`, `Layout/*` that communicate only through service interfaces.
+  - DI: Registered in `Program.cs` for easy testability and replaceability.
+
+## Technical Choices and Trade‑offs
+
+- Blazor WASM without backend
+  - + Simple deployment, low complexity, runs entirely in the browser.
+  - – All logic and data reside on the client (limited security). Suits demos/school projects.
+
+- `localStorage` for persistence
+  - + Sufficient for small datasets, no external dependencies, simple API via `IJSRuntime`.
+  - – Clear text, quota (~5–10 MB), no transactions/key indexing. For growing data: consider IndexedDB or a server API.
+
+- JSON serialization with `System.Text.Json`
+  - + Built into .NET, fast and lightweight. `JsonStringEnumConverter` + camelCase provides stable, readable JSON across languages.
+  - `WriteIndented = true` prioritizes readability over minimal size (reasonable for small data and simple debugging).
+
+- Import merge based on `Id` (GUID)
+  - + Prevents duplicates unambiguously. Name/type matching is avoided to prevent collisions.
+  - The "replace" option simplifies full restore without special cases.
+
+- Enum for expense categories
+  - + Compile-time safety, consistent UI/JSON, easy to extend in code.
+  - – Less flexible than free text. If user-defined tags are needed, introduce a separate tag model.
+
+- UI lock (PIN) instead of real auth
+  - + Minimal dependencies, quick to understand/use, sufficient to hide content.
+  - – Not real security. For production: use real authentication (e.g., OIDC) and server-side storage.
+
+- Error handling and logging
+  - Services use guard checks and return errors (e.g., a list on import). Console output is sufficient for debugging in a demo.
+
+## Future Improvements
+
+- Real authentication/authorization and server-side data storage.
+- Replace `localStorage` with IndexedDB for larger datasets and better robustness.
+- User-defined categories/tags with simple searchability.
+- Export/import both accounts and transaction history, plus checksums for integrity.
